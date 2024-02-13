@@ -1,0 +1,40 @@
+import cv2
+import mediapipe as mp
+
+
+# Initialize MediaPipe face detection
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5)
+
+# Load the image
+image = cv2.imread('C:/Users/itay5/Downloads/woman.jpg')
+
+# Resize the image to 920x860 resolution
+image_resized = cv2.resize(image, (920, 860))
+
+# Convert the image to RGB format (MediaPipe requires RGB input)
+image_rgb = cv2.cvtColor(image_resized, cv2.COLOR_BGR2RGB)
+
+# Perform face mesh detection
+results = face_mesh.process(image_rgb)
+
+# Draw dots and lines around the detected faces
+if results.multi_face_landmarks:
+    for face_landmarks in results.multi_face_landmarks:
+        ih, iw, _ = image_resized.shape
+        for landmark in face_landmarks.landmark:
+            x, y = int(landmark.x * iw), int(landmark.y * ih)
+            cv2.circle(image_resized, (x, y), 2, (0, 0, 255), -1)  # Draw dots in red
+        
+        # Connect facial landmarks with lines to outline the facial structure
+        connections = mp_face_mesh.FACEMESH_TESSELATION
+        for connection in connections:
+            for i in range(len(connection) - 1):  # Update this line
+                pt1 = (int(face_landmarks.landmark[connection[i]].x * iw), int(face_landmarks.landmark[connection[i]].y * ih))
+                pt2 = (int(face_landmarks.landmark[connection[i + 1]].x * iw), int(face_landmarks.landmark[connection[i + 1]].y * ih))
+                cv2.line(image_resized, pt1, pt2, (0, 255, 0), 1)  # Draw lines in green
+
+# Display the image with detected faces
+cv2.imshow('Face Detection', image_resized)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
